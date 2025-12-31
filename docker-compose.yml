@@ -1,0 +1,54 @@
+# docker-compose.yml for SmartFormsGPT
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: smartforms-app
+    ports:
+      - "8501:8501"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://smartforms:smartforms@db:5432/smartforms
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - smartforms-network
+
+  db:
+    image: postgres:14-alpine
+    container_name: smartforms-db
+    environment:
+      - POSTGRES_USER=smartforms
+      - POSTGRES_PASSWORD=smartforms
+      - POSTGRES_DB=smartforms
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - smartforms-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartforms-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - smartforms-network
+
+volumes:
+  postgres_data:
+
+networks:
+  smartforms-network:
+    driver: bridge
